@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "567716136659",
+    "firebase_url": "https://gastrovitapp.firebaseio.com",
+    "project_id": "gastrovitapp",
+    "storage_bucket": "gastrovitapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567716136659:android:6bc2d75f04331f86abf626",
+        "android_client_info": {
+          "package_name": "com.example.gastrovita"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "567716136659-q8csrkun82b17tf9eqt3qc61hnb9rgcb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVV4bf6CJrFfTqw0p-eZ3Ip8kWOkNd0vI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "567716136659-q8csrkun82b17tf9eqt3qc61hnb9rgcb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
