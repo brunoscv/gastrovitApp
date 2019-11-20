@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:gastrovita/attendance.dart';
-import 'package:gastrovita/error.dart';
+import 'package:gastrovita/location.dart';
 import 'package:gastrovita/sockets.dart';
+import 'package:gastrovita/teste.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:gastrovita/exame.dart';
 import 'package:gastrovita/info.dart';
@@ -22,10 +27,91 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-enum PageEnum { info, exame, attendance, doctor, home, notifications, sockets }
+enum PageEnum {
+  info,
+  exame,
+  attendance,
+  doctor,
+  home,
+  sockets,
+  location,
+  geolocation
+}
 
 class _HomePageState extends State<HomePage> {
+  final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   List<dynamic> data;
+
+  @override
+  void initState() {
+    super.initState();
+    this.iniciarFirebaseListeners();
+    this.getData();
+  }
+
+  void iniciarFirebaseListeners() {
+    if (Platform.isIOS) requisitarPermissoesParaNotificacoesNoIos();
+
+    _firebaseMessaging.getToken().then((token) {
+      print("Firebase token " + token);
+    });
+
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print('mensagem recebida $message');
+        this.mostrarAlert(
+            message["notification"]["title"], message["notification"]["body"]);
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print('on resume $message');
+      },
+      onLaunch: (Map<String, dynamic> message) async {
+        print('on launch $message');
+      },
+    );
+  }
+
+  Future<void> mostrarAlert(title, message) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[Text(message)],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('VOLTAR'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            RaisedButton(
+              child: Text('OK', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => AttendancePage()));
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void requisitarPermissoesParaNotificacoesNoIos() {
+    _firebaseMessaging.requestNotificationPermissions(
+        IosNotificationSettings(sound: true, badge: true, alert: true));
+    _firebaseMessaging.onIosSettingsRegistered
+        .listen((IosNotificationSettings settings) {
+      print("Settings registered: $settings");
+    });
+  }
 
   //Choices on go to the Pages in PopUpMenu
   _onSelect(PageEnum value) {
@@ -38,15 +124,40 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
             context, MaterialPageRoute(builder: (context) => ExamePage()));
         break;
-      case PageEnum.sockets:
+      case PageEnum.attendance:
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => SocketsPage()));
+            context, MaterialPageRoute(builder: (context) => AttendancePage()));
+        break;
+      case PageEnum.location:
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => LocationPage()));
+        break;
+      case PageEnum.geolocation:
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => TestePage()));
         break;
       default:
         Navigator.push(
             context, MaterialPageRoute(builder: (context) => HomePage()));
         break;
     }
+  }
+
+  Future<dynamic> getLocation() async {
+    final double placeLocationLatitude = -5.091214;
+    final double placeLocationLongitude = -42.806561;
+
+    Position position = await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final double userLocationLatitude = position.latitude;
+    final double userLocationLongitude = position.longitude;
+    final double distanceInMeters = await Geolocator().distanceBetween(
+        userLocationLatitude,
+        userLocationLongitude,
+        placeLocationLatitude,
+        placeLocationLongitude);
+
+    return distanceInMeters;
   }
 
   Future<String> getData() async {
@@ -62,7 +173,7 @@ class _HomePageState extends State<HomePage> {
     print(response.body);
   }
 
-  Future<void> _neverSatisfied() async {
+  Future<void> _getCheckinDialog() async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -81,15 +192,13 @@ class _HomePageState extends State<HomePage> {
             FlatButton(
               child: Text('NÃO'),
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ErrorPage()));
+                Navigator.of(context).pop();
               },
             ),
             RaisedButton(
               child: Text('SIM', style: TextStyle(color: Colors.white)),
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => AttendancePage()));
+                _verifyUserLocation();
               },
             ),
           ],
@@ -98,43 +207,70 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // @override
-  // void initState() {
-  //   this.getData();
-  // }
+  _verifyUserLocation() async {
+    double distance = await getLocation();
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return MaterialApp(
-  //     debugShowCheckedModeBanner: false,
-  //     home: DefaultTabController(
-  //       length: 2,
-  //       child: Scaffold(
-  //         appBar: AppBar(
-  //           title: Text(widget.title),
-  //           backgroundColor: Colors.purple,
-  //           bottom: TabBar(
-  //             tabs: [
-  //               Text(" CONSULTAS "),
-  //               Text(" CHECK-IN "),
-  //             ],
-  //           ),
-  //         ),
-  //         body: TabBarView(
-  //           children: [
-  //             HomePage(),
-  //             Icon(Icons.directions_transit),
-  //             Icon(Icons.directions_bike),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
+    if (distance > 0.2) {
+      _errorLocation();
+    } else {
+      _getStateLocation();
+    }
+  }
 
-  @override
-  void initState() {
-    this.getData();
+  Future<void> _errorLocation() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Erro!'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                    'Você não está nas proximidades do Hospital! Por favor tente novamente.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            RaisedButton(
+              child: Text('OK', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _getStateLocation() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Muito Obrigado'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Seu checkin foi realizado com sucesso.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            RaisedButton(
+              child: Text('OK', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => TestePage()));
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -162,18 +298,6 @@ class _HomePageState extends State<HomePage> {
               const PopupMenuItem<PageEnum>(
                 value: PageEnum.attendance,
                 child: Text('Atendente'),
-              ),
-              const PopupMenuItem<PageEnum>(
-                value: PageEnum.doctor,
-                child: Text('Médico'),
-              ),
-              const PopupMenuItem<PageEnum>(
-                value: PageEnum.notifications,
-                child: Text('Notificacoes'),
-              ),
-              const PopupMenuItem<PageEnum>(
-                value: PageEnum.sockets,
-                child: Text('Sockets'),
               ),
             ],
           )
@@ -237,7 +361,7 @@ class _HomePageState extends State<HomePage> {
                                         style: TextStyle(color: Colors.white),
                                       ),
                                       onPressed: () {
-                                        _neverSatisfied();
+                                        _getCheckinDialog();
                                       },
                                     )
                                   : RaisedButton(

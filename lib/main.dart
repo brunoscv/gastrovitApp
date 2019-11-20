@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gastrovita/attendance.dart';
 import 'package:gastrovita/exame.dart';
@@ -21,7 +20,6 @@ class MyApp extends StatefulWidget {
 enum PageEnum { info, exame, attendance, doctor, home, notifications }
 
 class _MyAppState extends State<MyApp> {
-  ObserverList<Function> _listeners = new ObserverList<Function>();
   _onMap() {
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => HomePage()));
