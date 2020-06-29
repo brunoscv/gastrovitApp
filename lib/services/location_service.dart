@@ -1,7 +1,7 @@
 import 'dart:async';
-
-import 'package:gastrovita/models/userlocation.dart';
+import 'dart:io';
 import 'package:location/location.dart';
+import '../models/userlocation.dart';
 
 class LocationService {
   // Keep track to user location
@@ -17,7 +17,7 @@ class LocationService {
 
   LocationService() {
     location.requestPermission().then((granted) {
-      if (granted) {
+      if (granted != null) {
         location.onLocationChanged().listen((locationData) {
           if (locationData != null) {
             _locationController.add(UserLocation(

@@ -1,34 +1,34 @@
 {
   "project_info": {
-    "project_number": "567716136659",
-    "firebase_url": "https://gastrovitapp.firebaseio.com",
-    "project_id": "gastrovitapp",
-    "storage_bucket": "gastrovitapp.appspot.com"
+    "project_number": "44506951840",
+    "firebase_url": "https://gastrovitanotifications.firebaseio.com",
+    "project_id": "gastrovitanotifications",
+    "storage_bucket": "gastrovitanotifications.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:567716136659:android:6bc2d75f04331f86abf626",
+        "mobilesdk_app_id": "1:44506951840:android:881d20dd4e6d8f0486d9c5",
         "android_client_info": {
-          "package_name": "com.example.gastrovita"
+          "package_name": "com.app.inkless"
         }
       },
       "oauth_client": [
         {
-          "client_id": "567716136659-q8csrkun82b17tf9eqt3qc61hnb9rgcb.apps.googleusercontent.com",
+          "client_id": "44506951840-r3tdurlqrmovvghkql9g3dftqm48ccb4.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCVV4bf6CJrFfTqw0p-eZ3Ip8kWOkNd0vI"
+          "current_key": "AIzaSyAkjoKyRMMzUfwuPm_zPKlInehOF2AQRQU"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "567716136659-q8csrkun82b17tf9eqt3qc61hnb9rgcb.apps.googleusercontent.com",
+              "client_id": "44506951840-r3tdurlqrmovvghkql9g3dftqm48ccb4.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

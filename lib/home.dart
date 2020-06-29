@@ -2,18 +2,22 @@ import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gastrovita/attendance.dart';
-import 'package:gastrovita/location.dart';
-import 'package:gastrovita/sockets.dart';
-import 'package:gastrovita/teste.dart';
+import 'package:gastrovita/services/api_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
-import 'package:gastrovita/exame.dart';
-import 'package:gastrovita/info.dart';
-import 'dart:convert' as convert;
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'package:jiffy/jiffy.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
+  final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+  sharedPreferences.getInt("paciente_id");
+
+  //print(sharedPreferences.getInt("paciente_id"));
+
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     home: HomePage(),
@@ -21,33 +25,26 @@ void main() {
 }
 
 class HomePage extends StatefulWidget {
-  final String title = "Gastrovita Home";
+  final String title = "Agendamentos";
+
+  final int id;
+
+  HomePage({Key key, this.id}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-enum PageEnum {
-  info,
-  exame,
-  attendance,
-  doctor,
-  home,
-  sockets,
-  location,
-  geolocation
-}
-
 class _HomePageState extends State<HomePage> {
   final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
-  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   List<dynamic> data;
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  SharedPreferences sharedPreferences;
 
   @override
   void initState() {
     super.initState();
     this.iniciarFirebaseListeners();
-    this.getData();
   }
 
   void iniciarFirebaseListeners() {
@@ -86,16 +83,13 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: <Widget>[
             FlatButton(
-              child: Text('VOLTAR'),
+              child: Text('ESTOU A CAMINHO'),
               onPressed: () {
                 Navigator.of(context).pop();
-              },
-            ),
-            RaisedButton(
-              child: Text('OK', style: TextStyle(color: Colors.white)),
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => AttendancePage()));
+                Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AttendancePage(id: widget.id)));
               },
             ),
           ],
@@ -113,78 +107,28 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  //Choices on go to the Pages in PopUpMenu
-  _onSelect(PageEnum value) {
-    switch (value) {
-      case PageEnum.info:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => InfoPage()));
-        break;
-      case PageEnum.exame:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => ExamePage()));
-        break;
-      case PageEnum.attendance:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => AttendancePage()));
-        break;
-      case PageEnum.location:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => LocationPage()));
-        break;
-      case PageEnum.geolocation:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => TestePage()));
-        break;
-      default:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => HomePage()));
-        break;
-    }
-  }
-
   Future<dynamic> getLocation() async {
     final double placeLocationLatitude = -5.091214;
     final double placeLocationLongitude = -42.806561;
 
-    Position position = await Geolocator()
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     final double userLocationLatitude = position.latitude;
     final double userLocationLongitude = position.longitude;
-    final double distanceInMeters = await Geolocator().distanceBetween(
-        userLocationLatitude,
-        userLocationLongitude,
-        placeLocationLatitude,
-        placeLocationLongitude);
-
+    final double distanceInMeters = await Geolocator().distanceBetween( userLocationLatitude, userLocationLongitude, placeLocationLatitude, placeLocationLongitude);
     return distanceInMeters;
   }
 
-  Future<String> getData() async {
-    var url = "https://jsonplaceholder.typicode.com/todos";
-
-    // Await the http get response, then decode the json-formatted responce.
-    http.Response response = await http
-        .get(Uri.encodeFull(url), headers: {"Accept": "application/json"});
-
-    this.setState(() {
-      data = convert.jsonDecode(response.body);
-    });
-    print(response.body);
-  }
-
-  Future<void> _getCheckinDialog() async {
+  Future<void> _getCheckinDialog(int schedulingId) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirmação de CHECKIN?'),
+          title: Text('CHECKIN:'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 Text('Tem certeza que deseja realizar o CHECK IN?'),
-                Text('Lembre-se que essa ação não pode ser desfeita.'),
               ],
             ),
           ),
@@ -195,10 +139,12 @@ class _HomePageState extends State<HomePage> {
                 Navigator.of(context).pop();
               },
             ),
-            RaisedButton(
+            FlatButton(
+              color: Colors.blue,
               child: Text('SIM', style: TextStyle(color: Colors.white)),
               onPressed: () {
-                _verifyUserLocation();
+                Navigator.of(context).pop();
+                _verifyUserLocation(schedulingId);
               },
             ),
           ],
@@ -207,13 +153,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _verifyUserLocation() async {
+  _verifyUserLocation(int schedulingId) async {
     double distance = await getLocation();
 
-    if (distance > 0.2) {
+    if (distance > 200) {
       _errorLocation();
     } else {
-      _getStateLocation();
+      _schedulingCheckin(schedulingId);
     }
   }
 
@@ -233,16 +179,33 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           actions: <Widget>[
-            RaisedButton(
+            FlatButton(
+              color: Colors.blue,
               child: Text('OK', style: TextStyle(color: Colors.white)),
               onPressed: () {
                 Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => HomePage(id: widget.id)));
               },
             ),
           ],
         );
       },
     );
+  }
+
+  Future<http.Response> _schedulingCheckin(int schedulingId) async {
+    final response = await http.get("https://gastrovita.inkless.digital/api/inklessapp/schedulingcheckin/$schedulingId");
+    final statusCode = response.statusCode;
+    if (statusCode == 201) {
+      _getStateLocation();
+    } else if ( statusCode != 201 || response.body == null){
+      throw Exception("Error occured : [Status Code : $statusCode]");
+      //_errorLocation();
+    }
+    return null;
   }
 
   Future<void> _getStateLocation() async {
@@ -260,11 +223,12 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           actions: <Widget>[
-            RaisedButton(
+            FlatButton(
+              color: Colors.blue,
               child: Text('OK', style: TextStyle(color: Colors.white)),
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => TestePage()));
+                Navigator.of(context).pop();
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(id: widget.id)));
               },
             ),
           ],
@@ -273,113 +237,322 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buttonCheckin(String flag, int schedulingId) {
+    if (flag == "Red") {
+      return Container(
+      width: 120,
+      child: Padding(
+        padding:const EdgeInsets.only(top: 30.0),
+        child: Card(
+          elevation: 10,
+          color:Colors.red[900],
+          shape: RoundedRectangleBorder( borderRadius: BorderRadius.all( Radius.circular(5)) ),
+          child: InkWell(
+            onTap: () {},
+            child: Center(
+              child: Column(
+                mainAxisSize:MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding:const EdgeInsets.all(5.0),
+                    child: Icon(FontAwesomeIcons.userInjured, size: 30,color: Colors.white,),
+                  ),
+                  Padding(
+                    padding:const EdgeInsets .all(3.0),
+                    child: Text( "Check-In Indisponível", style: TextStyle( color: Colors.white),),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ));
+    } else if (flag == "Blue") {
+      return Container(
+      width: 120,
+      child: Padding(
+        padding:const EdgeInsets.only(top: 30.0),
+        child: Card(
+          elevation: 10,
+          color:Colors.lightBlue[900],
+          shape: RoundedRectangleBorder( borderRadius: BorderRadius.all( Radius.circular(5)) ),
+          child: InkWell(
+            onTap: () {
+              _getCheckinDialog(schedulingId);
+            },
+            child: Center(
+              child: Column(
+                mainAxisSize:MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding:const EdgeInsets.all(5.0),
+                    child: Icon(FontAwesomeIcons.userClock, size: 30,color: Colors.white,),
+                  ),
+                  Padding(
+                    padding:const EdgeInsets .all(3.0),
+                    child: Text( "Fazer Check-In", style: TextStyle( color: Colors.white),),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ));
+    } else {
+      return Container(
+        width: 120,
+        child: Padding(
+          padding:const EdgeInsets.only(top: 30.0),
+          child: Card(
+            elevation: 10,
+            color:Colors.lightGreen[900],
+            shape: RoundedRectangleBorder( borderRadius: BorderRadius.all( Radius.circular(5)) ),
+            child: InkWell(
+              onTap: () {},
+              child: Center(
+                child: Column(
+                  mainAxisSize:MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding:const EdgeInsets.all(5.0),
+                      child: Icon(FontAwesomeIcons.userCheck, size: 30,color: Colors.white,),
+                    ),
+                    Padding(
+                      padding:const EdgeInsets .all(3.0),
+                      child: Text( "Check-In Feito", style: TextStyle( color: Colors.white),),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+        )
+      );
+    }
+  }
+
+  Widget getErrorWidget(BuildContext context, FlutterErrorDetails error) {
+  return Container(
+    padding: EdgeInsets.only(top:120, left:40, right:40),
+    child: ListView(
+      children: <Widget>[
+        SizedBox(
+          width:150,
+          height:150,
+          child: Image.asset("assets/images/wlan.png"),
+        ),
+          SizedBox(
+            height: 20,
+          ),
+          Text("Verifique suas conexões com a Internet.", style: TextStyle(fontSize: 18, color: Colors.grey), textAlign: TextAlign.center), 
+      ],
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    // ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+    //   return getErrorWidget(context, errorDetails);
+    // };
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
         backgroundColor: Colors.blue,
-        actions: <Widget>[
-          PopupMenuButton<PageEnum>(
-            onSelected: _onSelect,
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<PageEnum>>[
-              const PopupMenuItem<PageEnum>(
-                value: PageEnum.home,
-                child: Text('Inicial'),
-              ),
-              const PopupMenuItem<PageEnum>(
-                value: PageEnum.info,
-                child: Text('Informações'),
-              ),
-              const PopupMenuItem<PageEnum>(
-                value: PageEnum.exame,
-                child: Text('Resultado de Exames'),
-              ),
-              const PopupMenuItem<PageEnum>(
-                value: PageEnum.attendance,
-                child: Text('Atendente'),
-              ),
-            ],
-          )
+        actions: <Widget>[],
+      ),
+      body: Stack(
+        children: <Widget>[
+          FutureBuilder(
+              future: ShortSchedulingService.getUserScheduling(widget.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  final consultas = snapshot.data;
+                    if (consultas.schedulings.length <= 0) {
+                         return Container(
+                           padding: EdgeInsets.only(top:120, left:40, right:40),
+                            child: ListView(
+                              children: <Widget>[
+                                SizedBox(
+                                  width:150,
+                                  height:150,
+                                  child: Image.asset("assets/images/calendar.png"),
+                                ),
+                                 SizedBox(height: 20),
+                                 Text("Você não possui agendamentos para a data de hoje.", style: TextStyle(fontSize: 18, color: Colors.grey), textAlign: TextAlign.center),
+                              ],
+                            ),
+                          ); 
+                    } else {
+                        return ListView.builder(
+                          itemBuilder: (BuildContext context, int index) {
+                            var schedulingId = consultas.schedulings[index].id;
+                            var flag = consultas.schedulings[index].checkIn;
+                            var time = Jiffy("${consultas.schedulings[index].timeStartingBooked}","hh:mm:ss");
+                            var timeFormat = time.format("hh:mm");
+                            var date = Jiffy("${consultas.schedulings[index].dateScheduling}", "yyyy-MM-dd");
+                            var dateFormat = date.format("dd/MM/yyyy"); 
+                            return Column(children: <Widget>[
+                              new Card(
+                                clipBehavior: Clip.antiAliasWithSaveLayer,
+                                child: new Stack(
+                                  alignment: AlignmentDirectional.topStart,
+                                  children: <Widget>[
+                                    new Container(
+                                        width: double.infinity,
+                                        height: 150.0,
+                                        decoration: BoxDecoration(
+                                          // Box decoration takes a gradient
+                                          gradient: LinearGradient(
+                                            // Where the linear gradient begins and ends
+                                            begin: Alignment.topLeft,
+                                            end: Alignment(0.8, 0.0),
+                                            // Add one stop for each color. Stops should increase from 0 to 1
+                                            stops: [0.1, 0.5, 0.7, 0.9],
+                                            colors: [
+                                              // Colors are easy thanks to Flutter's Colors class.
+                                              Colors.blue[300],
+                                              Colors.blue[400],
+                                              Colors.blue[800],
+                                              Colors.blue[900],
+                                            ],
+                                          ),
+                                        )),
+                                    Container(width: 200.0, height: 400.0,),
+                                    FractionalTranslation(
+                                      translation: Offset(0.85, 0.4),
+                                      child: new Container(
+                                        alignment: new FractionalOffset(0.0, 0.0),
+                                        child: ClipOval(
+                                          child: Image.network(
+                                            'https://gastrovita.inkless.digital/storage/${consultas.schedulings[index].professionalImage}',
+                                            width: 130,
+                                            height: 130,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        width: 130.0,
+                                        height: 130.0,
+                                        padding: EdgeInsets.all(4.0),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFFFFFFFF), // border color
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      height: 450.0,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: EdgeInsets.only(top: 200.0),
+                                              child: Container(
+                                                width: double.infinity,
+                                                child: Text( "${consultas.schedulings[index].professionalName}", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold,color: Colors.lightBlue[900],), textAlign: TextAlign.center,),
+                                              ),
+                                            ),
+                                            Container(height: 10),
+                                            Padding(
+                                              padding: EdgeInsets.only(left: 0, top: 0.0,right: 0, bottom: 0.0),
+                                              child: Container(
+                                                width: double.infinity,
+                                                child: Text( "HOSPITAL GASTROVITA", style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold, color: Colors.blueGrey,),textAlign: TextAlign.center,),
+                                              ),
+                                            ),
+                                            Container(height: 10),
+                                            Wrap(
+                                              children: <Widget>[
+                                                Container(
+                                                  width: 100,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(top: 30.0),
+                                                    child: Card(
+                                                      elevation: 1,
+                                                      color: Colors.white,
+                                                      shape: RoundedRectangleBorder( borderRadius: BorderRadius.all(Radius.circular(5))),
+                                                      child: InkWell(
+                                                        onTap: () {},
+                                                        child: Center(
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(5.0),
+                                                                child: Icon( FontAwesomeIcons.clock,size: 30,color: Colors.lightBlue[900]),
+                                                              ),
+                                                              Padding(
+                                                                padding:const EdgeInsets.all(3.0),
+                                                                child: Text(timeFormat, style: TextStyle(color: Colors.lightBlue[900])),
+                                                              )
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                ),
+                                                Container(
+                                                  width: 100,
+                                                  child: Padding(
+                                                    padding:const EdgeInsets.only(top: 30.0),
+                                                    child: Card(
+                                                      elevation: 1,
+                                                      color: Colors.white,
+                                                      shape: RoundedRectangleBorder( borderRadius: BorderRadius.all( Radius.circular( 5)),
+                                                      ),
+                                                      child: InkWell(
+                                                        onTap: () {},
+                                                        child: Center(
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Padding(
+                                                                padding:const EdgeInsets.all(5.0),
+                                                                child: Icon(FontAwesomeIcons.calendarCheck, size: 30, color: Colors.lightBlue[900])),
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(3.0),
+                                                                child: Text(dateFormat, style: TextStyle(color: Colors.lightBlue[900])),
+                                                              )
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                ),
+                                                _buttonCheckin(flag, schedulingId),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  ]
+                                ),
+                              ),
+                            ]);
+                          },
+                          itemCount: consultas.schedulings.length,
+                          physics: ClampingScrollPhysics(),
+                          shrinkWrap: true,
+                        );
+                    }
+                } else {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+              }),
         ],
       ),
-      body: data == null
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: data == null ? 0 : data.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Center(
-                  child: Card(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage:
-                                AssetImage('assets/images/doctor.jpeg'),
-                          ),
-
-                          // title: Text(data[index]["title"]),
-                          // subtitle: Text(data[index]["title"]),
-                          title: Text("CARLOS DIMAS DE CARVALHO SOUSA"),
-                          subtitle: new RichText(
-                            text: new TextSpan(children: [
-                              WidgetSpan(
-                                child: new Icon(
-                                  Icons.calendar_today,
-                                  color: Colors.black26,
-                                  size: 20,
-                                ),
-                              ),
-                              TextSpan(
-                                  text: '  21/11\n',
-                                  style: TextStyle(color: Colors.black26)),
-                              WidgetSpan(
-                                child: new Icon(
-                                  Icons.alarm,
-                                  color: Colors.black26,
-                                  size: 20,
-                                ),
-                              ),
-                              TextSpan(
-                                  text: '  08h30.',
-                                  style: TextStyle(color: Colors.black26)),
-                            ]),
-                          ),
-                          contentPadding: EdgeInsets.all(8.0),
-                          isThreeLine: true,
-                          //subtitle: Text(Icon(Icons.calendar_today) . "20/01") . . Text(data[index]["title"]),
-                        ),
-                        ButtonTheme.bar(
-                          // make buttons use the appropriate styles for cards
-                          child: ButtonBar(
-                            children: <Widget>[
-                              data[index]["completed"] == false
-                                  ? RaisedButton(
-                                      child: const Text(
-                                        'FAZER CHECK-IN',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      onPressed: () {
-                                        _getCheckinDialog();
-                                      },
-                                    )
-                                  : RaisedButton(
-                                      child: const Text(
-                                        'CHECK-IN INDISPONIVEL',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      onPressed: null,
-                                    )
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
     );
   }
 }

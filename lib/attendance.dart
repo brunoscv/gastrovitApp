@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:gastrovita/models/tickets.dart';
-import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
+  final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+  sharedPreferences.getInt("paciente_id");
+
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     home: AttendancePage(),
@@ -12,116 +16,206 @@ void main() {
 }
 
 class AttendancePage extends StatefulWidget {
-  final String title = "Atendimento";
+  final String title = "";
+  
+  final int id;
+
+  // final String _messageImg = "Waiting for image..";
+  // final String _messageText = "Waiting for message...";
+
+  AttendancePage({Key key, this.id}) : super(key: key);
 
   @override
   _AttendancePageState createState() => _AttendancePageState();
 }
 
 class _AttendancePageState extends State<AttendancePage> {
-  Future<Ticket> fetchGet() async {
-    final response = await http.get(
-        "http://my-json-server.typicode.com/brunoscv/gastrovitaJson/tickets/1");
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
 
-    final statusCode = response.statusCode;
-
-    if (statusCode != 200 || response.body == null) {
-      throw Exception("Error occured : [Status Code : $statusCode]");
-    }
-    return ticketFromJson(response.body);
-  }
+  String _messageText = "Waiting";
+  String _messageImg = "Waiting";
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-      const oneSecond = const Duration(seconds: 25);
-      new Timer.periodic(oneSecond, (Timer t) => setState(() {}));
+    this.iniciarFirebaseListeners();
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        setState(() {
+          this.mostrarAlert(
+            message["notification"]["title"], message["notification"]["body"]);
+        });
+      },
+      onResume: (Map<String, dynamic> message) async {
+        setState(() {
+          Map<String, dynamic> m = {};
+          m['body'] = message["data"]["body"];
+          _messageText = m['body'];
+          m['image'] = message["data"]["image"];
+          _messageImg = (m['image'] != null) ? m['image'] : "https://pngimage.net/wp-content/uploads/2018/05/default-user-profile-image-png-7.png";
+          print("Resume: $message");
+        });
+      },
+      onLaunch: (Map<String, dynamic> message) async {
+        setState(() {
+          Map<String, dynamic> m = {};
+          m['body'] = message["data"]["body"];
+          _messageText = m['body'];
+          m['image'] = message["data"]["image"];
+          // _messageImg = m['image'];
+          _messageImg = (m['image'] != null) ? m['image'] : "https://pngimage.net/wp-content/uploads/2018/05/default-user-profile-image-png-7.png";
+           print("Launch :$message");
+        });
+      },
+    );
+  }
+
+  Future<dynamic> iniciarFirebaseListeners() async{
+    if (Platform.isIOS) requisitarPermissoesParaNotificacoesNoIos();
+
+    _firebaseMessaging.getToken().then((token) {
+      print("Firebase token " + token);
+    });
+  }
+
+  Future<void> mostrarAlert(title, message) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[Text(message)],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('ESTOU A CAMINHO'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void requisitarPermissoesParaNotificacoesNoIos() {
+    _firebaseMessaging.requestNotificationPermissions(
+        IosNotificationSettings(sound: true, badge: true, alert: true));
+    _firebaseMessaging.onIosSettingsRegistered
+        .listen((IosNotificationSettings settings) {
+      print("Settings registered: $settings");
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          elevation: 2.0,
-          backgroundColor: Colors.blue,
-          title: Text(widget.title),
-        ),
-        body: StaggeredGridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8.0,
-          mainAxisSpacing: 8.0,
-          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          children: <Widget>[
-            _buildTile(
-              Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            'Today\'s OPD',
-                            style: TextStyle(
-                                color: Colors.blueAccent, fontSize: 12.0),
-                          ),
-                          buildTicketWidget(),
-                        ],
-                      ),
-                      Material(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(12.0),
-                          child: Center(
-                              child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(Icons.timeline,
-                                color: Colors.white, size: 20.0),
-                          )))
-                    ]),
+      body: Stack(
+        children: <Widget>[
+          DecoratedBox(
+            decoration: BoxDecoration(
+              // Box decoration takes a gradient
+              gradient: LinearGradient(
+                // Where the linear gradient begins and ends
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                // Add one stop for each color. Stops should increase from 0 to 1
+                stops: [0.1, 0.5, 0.7, 0.9],
+                colors: [
+                  // Colors are easy thanks to Flutter's Colors class.
+                  Colors.blue[300],
+                  Colors.blue[400],
+                  Colors.blue[800],
+                  Colors.blue[900],
+                ],
               ),
             ),
-          ],
-          staggeredTiles: [StaggeredTile.extent(2, 90.0)],
-        ));
-  }
-
-  Widget _buildTile(Widget child, {Function() onTap}) {
-    return Material(
-        elevation: 14.0,
-        borderRadius: BorderRadius.circular(12.0),
-        shadowColor: Color(0x802196F3),
-        child: InkWell(
-            // Do onTap() if it isn't null, otherwise do print()
-            onTap: onTap != null
-                ? () => onTap()
-                : () {
-                    print('Not set yet');
-                  },
-            child: child));
-  }
-
-  Widget buildTicketWidget() {
-    Widget ticketShow = new Center(
-      child: new FutureBuilder<Ticket>(
-          future: fetchGet(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              /* O texto abaixo recarrega a cada 25 segundos. */
-              return new Text('${snapshot.data.paciente}',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.0));
-            } else {
-              return CircularProgressIndicator();
-            }
-          }),
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(25.0),
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Align(
+                                alignment: Alignment.center,
+                                child: Container(
+                                  child: Text(
+                                    "Olá! Você tem uma nova notificação.",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15.0,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ]),
+                      ),
+                    ],
+                  ),
+                  Center(
+                    child: ClipOval(
+                      child: Image.network(
+                        '$_messageImg',
+                        width: 130,
+                        height: 130,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(25.0),
+                        child: Column(children: <Widget>[
+                          Text(
+                            _messageText,
+                            style: TextStyle(
+                                color: Colors.white, fontSize: 15.0),
+                            textAlign: TextAlign.justify,
+                          ),
+                          Container(
+                            height: 10,
+                          ),
+                          SizedBox(
+                            height: 60,
+                            width: double.infinity,
+                            child: RaisedButton(
+                                color: Colors.lightBlue,
+                                child: Text('VOLTAR',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    )),
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                }),
+                          ),
+                        ]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
     );
-    return ticketShow;
   }
 }
