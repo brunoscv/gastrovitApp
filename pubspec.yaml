@@ -24,6 +24,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   #alphabetic order
   adhara_socket_io: ^0.4.1
+  android_intent: ^0.3.6+12
   badges: ^1.1.1
   cupertino_icons: ^0.1.2
   firebase_messaging: ^5.1.8
@@ -32,7 +33,10 @@ dependencies:
   google_maps_flutter: any
   http: 0.12.0+2
   location: ^2.3.5
+  location_permissions: ^3.0.0+1
   mask_text_input_formatter: ^1.0.5
+  permission_handler: ^4.4.0+hotfix.2
+  permissions_plugin: ^1.1.4
   date_format: ^1.0.8
   intl: ^0.16.0
   jiffy: ^2.1.2

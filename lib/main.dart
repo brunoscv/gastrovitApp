@@ -30,7 +30,8 @@ void main() async {
       '/home': (BuildContext context) => new HomePage(id: pacienteId),
       '/login': (BuildContext context) => new LoginPage(),
       '/historic': (BuildContext context) => new HistoricPage(id: pacienteId),
-      '/attendance': (BuildContext context) => new AttendancePage(id: pacienteId),
+      '/attendance': (BuildContext context) =>
+          new AttendancePage(id: pacienteId),
     },
   ));
 }
@@ -58,7 +59,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _navigateToItemDetail(Map<String, dynamic> message) {
-    final String pagechooser= message["data"]['screen'];
+    final String pagechooser = message["data"]['screen'];
     Navigator.pushNamed(context, pagechooser);
   }
 
@@ -133,7 +134,10 @@ class _MainPageState extends State<MainPage> {
             onTap: () {
               Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomePage(id: sharedPreferences.getInt("paciente_id")))); },
+                  MaterialPageRoute(
+                      builder: (context) => HomePage(
+                          id: sharedPreferences.getInt("paciente_id"))));
+            },
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -146,7 +150,7 @@ class _MainPageState extends State<MainPage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      "Agendamentos",
+                      "Check-In",
                       style: TextStyle(color: Colors.white),
                     ),
                   )
@@ -172,10 +176,12 @@ class _MainPageState extends State<MainPage> {
         ),
         child: InkWell(
           onTap: () {
-             Navigator.push(
+            Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>HistoricPage(id: sharedPreferences.getInt("paciente_id"))));},
+                    builder: (context) => HistoricPage(
+                        id: sharedPreferences.getInt("paciente_id"))));
+          },
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -188,7 +194,7 @@ class _MainPageState extends State<MainPage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    "Histórico",
+                    "Agendamentos",
                     style: TextStyle(color: Colors.white),
                   ),
                 )
@@ -216,7 +222,9 @@ class _MainPageState extends State<MainPage> {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>InfoPage(id: sharedPreferences.getInt("paciente_id"))));},
+                    builder: (context) =>
+                        InfoPage(id: sharedPreferences.getInt("paciente_id"))));
+          },
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -228,7 +236,9 @@ class _MainPageState extends State<MainPage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text("Meu Perfil", style: TextStyle(color: Colors.white),
+                  child: Text(
+                    "Perfil",
+                    style: TextStyle(color: Colors.white),
                   ),
                 )
               ],
@@ -341,37 +351,48 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
       ]),
-       bottomNavigationBar: BottomNavigationBar(
-       backgroundColor: Colors.blue[900],
-       currentIndex: 0, // this will be set when a new tab is tapped
-       items: [
-        BottomNavigationBarItem(
-          icon:new SizedBox(
-            child: new IconButton(
-                icon: new Image.asset("assets/images/inkless-vertical-branca.png", height: 80, width: 100,),
-                onPressed: () {}),
-            width: 60,
-            height:60,
-          ),
-          title: new Text("", style: new TextStyle(fontSize: 0),)),
-        BottomNavigationBarItem(
-          icon:new SizedBox(
-            child: new IconButton(
-                color: Colors.white,
-                icon: Icon(Icons.exit_to_app, size: 30,),
-                onPressed: () {
-                  sharedPreferences.clear();
-                  sharedPreferences.remove("paciente_id");
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => LoginPage()),
-                      (Route<dynamic> route) => false);
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.blue[900],
+        currentIndex: 0, // this will be set when a new tab is tapped
+        items: [
+          BottomNavigationBarItem(
+              icon: new SizedBox(
+                child: new IconButton(
+                    icon: new Image.asset(
+                      "assets/images/inkless-vertical-branca.png",
+                      height: 80,
+                      width: 100,
+                    ),
+                    onPressed: () {}),
+                width: 60,
+                height: 60,
+              ),
+              title: new Text(
+                "",
+                style: new TextStyle(fontSize: 0),
+              )),
+          BottomNavigationBarItem(
+              icon: new SizedBox(
+                child: new IconButton(
+                    color: Colors.white,
+                    icon: Icon(
+                      Icons.exit_to_app,
+                      size: 30,
+                    ),
+                    onPressed: () {
+                      sharedPreferences.clear();
+                      sharedPreferences.remove("paciente_id");
+                      Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => LoginPage()),
+                          (Route<dynamic> route) => false);
                     }),
-            width: 60,
-            height: 60,
-          ),
-          title: new Text("", style: TextStyle(fontSize:0, color: Colors.white)))
-       ],
-     ),
+                width: 60,
+                height: 60,
+              ),
+              title: new Text("",
+                  style: TextStyle(fontSize: 0, color: Colors.white)))
+        ],
+      ),
     );
   }
 }
