@@ -206,7 +206,7 @@ class _MainPageState extends State<MainPage> {
     ));
   }
 
-  Widget profileBlock() {
+  Widget fileBlock() {
     return Container(
         child: Padding(
       padding:
@@ -230,14 +230,57 @@ class _MainPageState extends State<MainPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  FontAwesomeIcons.userAlt,
+                  FontAwesomeIcons.file,
                   size: 80,
                   color: Colors.white,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    "Perfil",
+                    "Laudos",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    ));
+  }
+
+  Widget documentBlock() {
+    return Container(
+        child: Padding(
+      padding:
+          const EdgeInsets.only(left: 5.0, right: 5.0, bottom: 5.0, top: 5.0),
+      child: Card(
+        elevation: 10,
+        color: Colors.blue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(5)),
+        ),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        InfoPage(id: sharedPreferences.getInt("paciente_id"))));
+          },
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  FontAwesomeIcons.folder,
+                  size: 80,
+                  color: Colors.white,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    "Documentos",
                     style: TextStyle(color: Colors.white),
                   ),
                 )
@@ -344,7 +387,8 @@ class _MainPageState extends State<MainPage> {
               children: [
                 checkinBlock(),
                 historicBlock(),
-                profileBlock(),
+                fileBlock(),
+                documentBlock(),
                 // logoutBlock(),
               ],
             ),
