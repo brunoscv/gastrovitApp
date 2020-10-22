@@ -95,6 +95,7 @@ class _HistoricPageState extends State<HistoricPage> {
             ),
           ));
     }
+    return Column();
   }
 
   @override

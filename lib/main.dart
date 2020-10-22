@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gastrovita/attendance.dart';
+import 'package:gastrovita/documents.dart';
 import 'package:gastrovita/historic.dart';
 import 'package:gastrovita/home.dart';
 import 'package:gastrovita/info.dart';
 import 'package:gastrovita/login.dart';
+import 'package:gastrovita/reports.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -21,6 +23,13 @@ void main() async {
   if (pacienteId == null) {
     _defaultHome = new LoginPage();
   }
+
+  String getFirstWords(String sentence, int wordCounts) {
+    return sentence.split(" ").sublist(0, wordCounts).join(" ");
+  }
+
+  String result = getFirstWords("Lorem Ipsum is simply dummy text", 2);
+  print(result); // Lorem Ipsum
 
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
@@ -117,6 +126,66 @@ class _MainPageState extends State<MainPage> {
         .listen((IosNotificationSettings settings) {
       print("Settings registered: $settings");
     });
+  }
+
+  Widget profileImg() {
+    return Container(
+      child: Column(
+        children: <Widget>[
+          Container(
+            padding: EdgeInsets.only(top: 2.0, bottom: 2.0),
+            child: Center(
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => InfoPage(
+                              id: sharedPreferences.getInt("paciente_id"))));
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(left: 10.0, right: 20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                "José Paciente Teste",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20.0,
+                                ),
+                              ),
+                              SizedBox(
+                                height: 5.0,
+                              ),
+                            ],
+                          ),
+                        ),
+                        ClipOval(
+                          child: Image.network(
+                            "https://gastrovita.inkless.digital/storage/img/181914202002115e431a52db653.png",
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
   }
 
   Widget checkinBlock() {
@@ -222,8 +291,8 @@ class _MainPageState extends State<MainPage> {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>
-                        InfoPage(id: sharedPreferences.getInt("paciente_id"))));
+                    builder: (context) => ReportsPage(
+                        id: sharedPreferences.getInt("paciente_id"))));
           },
           child: Center(
             child: Column(
@@ -265,8 +334,8 @@ class _MainPageState extends State<MainPage> {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>
-                        InfoPage(id: sharedPreferences.getInt("paciente_id"))));
+                    builder: (context) => DocumentsPage(
+                        id: sharedPreferences.getInt("paciente_id"))));
           },
           child: Center(
             child: Column(
@@ -379,7 +448,13 @@ class _MainPageState extends State<MainPage> {
           child: Center(),
         ),
         Container(
-          margin: EdgeInsets.only(top: 80),
+            margin: EdgeInsets.only(top: 50.0),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 5, right: 5),
+              child: profileImg(),
+            )),
+        Container(
+          margin: EdgeInsets.only(top: 120),
           child: Padding(
             padding: const EdgeInsets.only(left: 5, right: 5),
             child: GridView.count(

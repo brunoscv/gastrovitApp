@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gastrovita/attendance.dart';
+import 'package:gastrovita/opentok.dart';
 import 'package:gastrovita/services/api_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permissions_plugin/permissions_plugin.dart';
@@ -234,7 +235,7 @@ class _HomePageState extends State<HomePage> {
   _verifyUserLocation(int schedulingId) async {
     double distance = await getLocation();
 
-    if (distance > 2000000000000000) {
+    if (distance > 200000000000000) {
       Navigator.of(context).pop();
       _errorLocation();
     } else {
@@ -391,7 +392,7 @@ class _HomePageState extends State<HomePage> {
       return Container(
           width: 120,
           child: Padding(
-            padding: const EdgeInsets.only(top: 30.0),
+            padding: const EdgeInsets.only(top: 5.0),
             child: Card(
               elevation: 10,
               color: Colors.red[900],
@@ -431,7 +432,7 @@ class _HomePageState extends State<HomePage> {
       return Container(
           width: 120,
           child: Padding(
-            padding: const EdgeInsets.only(top: 30.0),
+            padding: const EdgeInsets.only(top: 5.0),
             child: Card(
               elevation: 10,
               color: Colors.lightBlue[900],
@@ -470,7 +471,7 @@ class _HomePageState extends State<HomePage> {
       return Container(
           width: 120,
           child: Padding(
-            padding: const EdgeInsets.only(top: 30.0),
+            padding: const EdgeInsets.only(top: 5.0),
             child: Card(
               elevation: 10,
               color: Colors.lightGreen[900],
@@ -503,6 +504,58 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ));
+    }
+  }
+
+  Widget _buttonVideoCall(String flag, int schedulingId) {
+    if (flag == "Red") {
+      return Container(
+        child: Padding(
+          padding: EdgeInsets.all(10.0),
+          child: FlatButton(
+              onPressed: () => {},
+              color: Colors.red[900],
+              textColor: Colors.white,
+              padding: EdgeInsets.all(10.0),
+              child: Column(children: <Widget>[
+                Icon(FontAwesomeIcons.phone),
+                Text("Chamada de Teleconsulta não disponível")
+              ])),
+        ),
+      );
+    } else if (flag == "Blue") {
+      return Container(
+        child: Padding(
+          padding: EdgeInsets.all(10.0),
+          child: FlatButton(
+              onPressed: () => {},
+              color: Colors.grey,
+              textColor: Colors.white,
+              padding: EdgeInsets.all(10.0),
+              child: Column(children: <Widget>[
+                Icon(FontAwesomeIcons.phone),
+                Text("Teleconsulta ainda não disponível")
+              ])),
+        ),
+      );
+    } else {
+      return Container(
+        child: Padding(
+          padding: EdgeInsets.all(10.0),
+          child: FlatButton(
+              onPressed: () => {
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => OpentokPage()))
+                  },
+              color: Colors.lightBlue[900],
+              textColor: Colors.white,
+              padding: EdgeInsets.all(10.0),
+              child: Column(children: <Widget>[
+                Icon(FontAwesomeIcons.phone),
+                Text("Atender Chamada de Teleconsulta")
+              ])),
+        ),
+      );
     }
   }
 
@@ -610,7 +663,7 @@ class _HomePageState extends State<HomePage> {
                                       )),
                                   Container(
                                     width: 200.0,
-                                    height: 400.0,
+                                    height: 450.0,
                                   ),
                                   FractionalTranslation(
                                     translation: Offset(0.85, 0.4),
@@ -635,7 +688,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                   Container(
-                                    height: 450.0,
+                                    height: 500.0,
                                     child: Padding(
                                       padding: EdgeInsets.all(10),
                                       child: Column(
@@ -679,6 +732,26 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                           ),
                                           Container(height: 10),
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                                left: 0,
+                                                top: 0.0,
+                                                right: 0,
+                                                bottom: 0.0),
+                                            child: Container(
+                                              width: double.infinity,
+                                              child: Text(
+                                                "TELECONSULTA",
+                                                style: TextStyle(
+                                                  fontSize: 15.0,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blueGrey,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                          Container(height: 10),
                                           Wrap(
                                             children: <Widget>[
                                               Container(
@@ -686,7 +759,7 @@ class _HomePageState extends State<HomePage> {
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.only(
-                                                            top: 30.0),
+                                                            top: 5.0),
                                                     child: Card(
                                                       elevation: 1,
                                                       color: Colors.white,
@@ -739,7 +812,7 @@ class _HomePageState extends State<HomePage> {
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.only(
-                                                            top: 30.0),
+                                                            top: 5.0),
                                                     child: Card(
                                                       elevation: 1,
                                                       color: Colors.white,
@@ -790,6 +863,11 @@ class _HomePageState extends State<HomePage> {
                                               _buttonCheckin(
                                                   flag, schedulingId),
                                             ],
+                                          ),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: _buttonVideoCall(
+                                                flag, schedulingId),
                                           ),
                                         ],
                                       ),

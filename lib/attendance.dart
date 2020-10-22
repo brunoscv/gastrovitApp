@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
-  final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+  final SharedPreferences sharedPreferences =
+      await SharedPreferences.getInstance();
   sharedPreferences.getInt("paciente_id");
 
   runApp(MaterialApp(
@@ -17,7 +17,7 @@ void main() async {
 
 class AttendancePage extends StatefulWidget {
   final String title = "";
-  
+
   final int id;
 
   // final String _messageImg = "Waiting for image..";
@@ -42,8 +42,8 @@ class _AttendancePageState extends State<AttendancePage> {
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
         setState(() {
-          this.mostrarAlert(
-            message["notification"]["title"], message["notification"]["body"]);
+          this.mostrarAlert(message["notification"]["title"],
+              message["notification"]["body"]);
         });
       },
       onResume: (Map<String, dynamic> message) async {
@@ -52,7 +52,9 @@ class _AttendancePageState extends State<AttendancePage> {
           m['body'] = message["data"]["body"];
           _messageText = m['body'];
           m['image'] = message["data"]["image"];
-          _messageImg = (m['image'] != null) ? m['image'] : "https://pngimage.net/wp-content/uploads/2018/05/default-user-profile-image-png-7.png";
+          _messageImg = (m['image'] != null)
+              ? m['image']
+              : "https://pngimage.net/wp-content/uploads/2018/05/default-user-profile-image-png-7.png";
           print("Resume: $message");
         });
       },
@@ -63,14 +65,16 @@ class _AttendancePageState extends State<AttendancePage> {
           _messageText = m['body'];
           m['image'] = message["data"]["image"];
           // _messageImg = m['image'];
-          _messageImg = (m['image'] != null) ? m['image'] : "https://pngimage.net/wp-content/uploads/2018/05/default-user-profile-image-png-7.png";
-           print("Launch :$message");
+          _messageImg = (m['image'] != null)
+              ? m['image']
+              : "https://pngimage.net/wp-content/uploads/2018/05/default-user-profile-image-png-7.png";
+          print("Launch :$message");
         });
       },
     );
   }
 
-  Future<dynamic> iniciarFirebaseListeners() async{
+  Future<dynamic> iniciarFirebaseListeners() async {
     if (Platform.isIOS) requisitarPermissoesParaNotificacoesNoIos();
 
     _firebaseMessaging.getToken().then((token) {
@@ -137,7 +141,6 @@ class _AttendancePageState extends State<AttendancePage> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(32.0),
-              
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -186,8 +189,8 @@ class _AttendancePageState extends State<AttendancePage> {
                         child: Column(children: <Widget>[
                           Text(
                             _messageText,
-                            style: TextStyle(
-                                color: Colors.white, fontSize: 15.0),
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 15.0),
                             textAlign: TextAlign.justify,
                           ),
                           Container(

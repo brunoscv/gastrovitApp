@@ -205,6 +205,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.2.0"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.1"
   location:
     dependency: "direct main"
     description:
@@ -240,6 +247,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.8"
+  ondoc_flutter_opentok:
+    dependency: "direct main"
+    description:
+      name: ondoc_flutter_opentok
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.12"
   path:
     dependency: transitive
     description:

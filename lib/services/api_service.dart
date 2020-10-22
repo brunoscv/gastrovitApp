@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import '../models/consultas.dart';
 import '../models/consultations.dart';
@@ -10,7 +9,8 @@ import 'package:http/http.dart' as http;
 class Urls {
   //static const DEMO_API_URL = "https://demo.denarius.digital/api/mobile";
   static const DEMO_API_URL = "https://gastrovita.inkless.digital/api/mobile";
-  static const BASE_API_URL = "https://gastrovita.inkless.digital/api/inklessapp";
+  static const BASE_API_URL =
+      "https://gastrovita.inkless.digital/api/inklessapp";
   static const CUSTOMER_API_URL = "https://gastrovita.inkless.digital/api";
 }
 
@@ -44,8 +44,10 @@ class AuthorizationUsers {
 class SchedulingService {
   static Future<Consultations> getUserScheduling(int userId) async {
     try {
-      final response = await http.get('${Urls.CUSTOMER_API_URL}/customer/$userId');
+      final response =
+          await http.get('${Urls.CUSTOMER_API_URL}/customer/$userId');
       if (response.statusCode == 200) {
+        print(userId);
         return Consultations.fromJson(json.decode(response.body));
       } else {
         return null;
@@ -74,7 +76,8 @@ class ShortSchedulingService {
 class AllSchedulingService {
   static Future<Consultas> getAllScheduling(int userId) async {
     try {
-      final response = await http.get('${Urls.DEMO_API_URL}/checkinidall/$userId');
+      final response =
+          await http.get('${Urls.DEMO_API_URL}/checkinidall/$userId');
       if (response.statusCode == 200) {
         return Consultas.fromJson(json.decode(response.body));
       } else {
